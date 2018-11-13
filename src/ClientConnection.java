@@ -162,10 +162,6 @@ public class ClientConnection extends Thread {
 			{
 				String currentRequest = this.readData();
 				Map<String, String> params = parseRequest(currentRequest);
-				/*
-				 * Maybe parse currentRequest into an object using GSON or something of that ilk.
-				 * Doesn't really matter, just find a way to get parameters out of it.
-				 */
 				
 				String intent = params.get("intent");
 				if(intent.equals("login"))
@@ -173,14 +169,36 @@ public class ClientConnection extends Thread {
 					String username = params.get("username");
 					String password = params.get("password");
 					
-					loginUser(username, password);
+					int[] record = connectedServer.verifyAccount(username, password);
+					if(record[0]==-1)
+					{
+						String response = "valid=false";
+						// TODO: send response to Client
+					}
+					else
+					{
+						this.userID=record[2];
+						String response = "valid=true&userID="+record[2]+"&wins="+record[0]+"&losses="+record[1];
+						// TODO: send response to Client
+					}
 				}
 				else if(intent.equals("createAccount"))
 				{
 					String username = params.get("username");
 					String password = params.get("password");
 					
-					this.userID = this.connectedServer.createUser(username, password);
+					int result = this.connectedServer.createUser(username, password);
+					if(result==-1)
+					{
+						String response = "valid=false";
+						// TODO: send response to Client
+					}
+					else
+					{
+						this.userID = result;
+						String response = "valid=true&userID="+result;
+						// TODO: send response to Client
+					}
 				}
 			}
 		}
