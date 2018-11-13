@@ -1,12 +1,6 @@
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
@@ -24,8 +18,12 @@ public class ClientConnection extends Thread {
 	{
 		this.connectedServer = spookyChessServer;
 		
-		this.bufferedInput = new BufferedReader(new InputStreamReader(connectedSocket.getInputStream()));
-		this.outputWriter = new PrintWriter(connectedSocket.getOutputStream(), true);
+		try {
+			this.bufferedInput = new BufferedReader(new InputStreamReader(connectedSocket.getInputStream()));
+			this.outputWriter = new PrintWriter(connectedSocket.getOutputStream(), true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 		this.inGame = false;
 		this.isRunning = true;
