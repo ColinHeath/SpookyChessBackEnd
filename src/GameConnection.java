@@ -6,8 +6,12 @@ public class GameConnection {
 	{
 		this.left = left;
 		this.left.setInGame(true);
+		this.left.setGC(this);
+		
 		this.right = right;
 		this.right.setInGame(true);
+		this.right.setGC(this);
+		
 		this.scs = scs;
 	}
 	

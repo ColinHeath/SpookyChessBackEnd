@@ -12,6 +12,7 @@ public class ClientConnection extends Thread {
 	private int userID = -1;
 	private Socket connectedSocket;
 	private SpookyChessServer connectedServer;
+	private GameConnection gc;
 	private boolean inGame; // flag that tracks whether this client is currently in a game or not
 	
 	private BufferedReader bufferedInput;
@@ -23,6 +24,7 @@ public class ClientConnection extends Thread {
 		this.connectedServer = spookyChessServer;
 		this.connectedSocket = connectedSocket;
 		inGame = false;
+		gc = null;
 		
 		try {
 			this.bufferedInput = new BufferedReader(new InputStreamReader(this.connectedSocket.getInputStream()));
@@ -92,6 +94,11 @@ public class ClientConnection extends Thread {
 	public void setInGame(boolean inGame)
 	{
 		this.inGame = inGame;
+	}
+	
+	public void setGC(GameConnection gc)
+	{
+		this.gc = gc;
 	}
 	
 	public void close()
