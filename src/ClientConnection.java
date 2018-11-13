@@ -17,7 +17,6 @@ public class ClientConnection extends Thread {
 	private BufferedReader bufferedInput;
 	private PrintWriter outputWriter;
 	private boolean isRunning;
-	private boolean inGame;
 	
 	public ClientConnection(Socket connectedSocket, SpookyChessServer spookyChessServer)
 	{
@@ -40,11 +39,6 @@ public class ClientConnection extends Thread {
 	
 	public boolean loginUser(String userName, String password)
 	{
-<<<<<<< HEAD
-		//TODO: Use JDBC to login the user. Shouldn't be terribly difficult.
-		// Make sure to make use of functions in SpookyChessServer scs.createUser() or scs.verifyAccount()
-		return false;
-=======
 		//TODO: Make outputs realistic for Connor's server messaging scheme.
 		
 		int[] loginResult = this.connectedServer.verifyAccount(userName, password);
@@ -63,7 +57,6 @@ public class ClientConnection extends Thread {
 		}
 		
 		return (this.userID != -1);
->>>>>>> 5d1e2ab961dce923736dc8db074910cc7daf82bd
 	}
 	
 	public String readData()
@@ -95,17 +88,13 @@ public class ClientConnection extends Thread {
 		this.outputWriter.print(toWrite);
 	}
 	
-<<<<<<< HEAD
 	// mutator method for inGame variable.
 	public void setInGame(boolean inGame)
 	{
 		this.inGame = inGame;
 	}
 	
-	public boolean close()
-=======
 	public void close()
->>>>>>> 5d1e2ab961dce923736dc8db074910cc7daf82bd
 	{
 		this.isRunning = false;
 		
@@ -130,26 +119,6 @@ public class ClientConnection extends Thread {
 		//When the reader has text, check if it's a login request. If so, do your thing.
 		//Otherwise, ignore it. Let GameConnection take other values out.
 		//Not sure how to check for one value while saving others for removal (buffering within the class?)
-<<<<<<< HEAD
-		String request = readData();
-		
-		/* Use the below code if we are using HTTP Headers to transfer info (rather than URL parameters) */
-		HttpRequestParser parser = new HttpRequestParser();
-		try {
-			parser.parseRequest(request);
-			String intent = parser.getHeaderParam("intent");
-			if(intent!=null)
-			{
-				System.out.println("Intent: "+intent);
-			}
-			else
-			{
-				System.out.println("Received request with no intent header! It will be discarded.");
-			}
-		} catch (IllegalArgumentException | IOException e) {
-			e.printStackTrace();
-		}
-=======
 		while(isRunning)
 		{
 			if(inGame)
@@ -182,8 +151,6 @@ public class ClientConnection extends Thread {
 				}
 			}
 		}
-		
->>>>>>> 5d1e2ab961dce923736dc8db074910cc7daf82bd
 	}
 }
 

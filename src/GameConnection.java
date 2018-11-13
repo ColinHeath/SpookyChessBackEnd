@@ -12,9 +12,10 @@ public class GameConnection {
 	}
 	
 	// Close both of this game's Client Connections.
-	public boolean close()
+	public void close()
 	{
-		return (left.close() && right.close());
+		left.close();
+		right.close();
 	}
 }
 
