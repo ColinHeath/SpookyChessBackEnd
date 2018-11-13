@@ -6,7 +6,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 
 public class ClientConnection extends Thread {
 	private int userID = -1;
@@ -61,6 +63,9 @@ public class ClientConnection extends Thread {
 		return (this.userID != -1);
 	}
 	
+	/* Note: to demo this, run a SpookyChessServer on port 8080 then paste the following into your web browser's URL bar:
+	 * 	http://localhost:8080/?intent=login&username=ben&password=sponge
+	 */
 	public String readData()
 	{
 		String totalInput = "";
@@ -68,11 +73,15 @@ public class ClientConnection extends Thread {
 		try
 		{
 			String inputLine;
-			
-			while((inputLine = this.bufferedInput.readLine()) != null)
+			inputLine = this.bufferedInput.readLine();
+			while( !inputLine.equals("") ) // HTTP requests end in an empty line
 			{
-				totalInput += inputLine + "\n";
-				System.out.println(inputLine);
+				if(inputLine.length() >= 3 && inputLine.substring(0, 3).equals("GET")) // only keep GET request line
+				{
+					totalInput += inputLine + "\n";
+					System.out.println(inputLine);
+				}
+				inputLine = this.bufferedInput.readLine();
 			}
 		}
 		catch(IOException ioe)
@@ -120,6 +129,23 @@ public class ClientConnection extends Thread {
 		}
 	}
 	
+	public Map<String, String> parseRequest(String request)
+	{
+		System.out.println("In parseRequest");
+		Map<String, String> params = new HashMap<String, String>();
+		String strippedRequest = request.split(" ")[1].split("\\?")[1];
+		// Use regex to split on = and &
+		String[]tokens = strippedRequest.split("=|\\&");
+		
+		assert tokens.length % 2 == 0 : " Number of tokens is odd"; // keys and values must be equal, thus there must be an even number total
+		for(int i=0; i<tokens.length; i+=2)
+		{
+			System.out.println(tokens[i]+": "+tokens[i+1]);
+			params.put(tokens[i], tokens[i+1]);
+		}
+		return params;
+	}
+	
 	public void run()
 	{
 
@@ -135,24 +161,24 @@ public class ClientConnection extends Thread {
 			else
 			{
 				String currentRequest = this.readData();
-				
+				Map<String, String> params = parseRequest(currentRequest);
 				/*
 				 * Maybe parse currentRequest into an object using GSON or something of that ilk.
 				 * Doesn't really matter, just find a way to get parameters out of it.
 				 */
 				
-				String intent = ""; //TODO: Get a real value here, from the reader.
+				String intent = params.get("intent");
 				if(intent.equals("login"))
 				{
-					String username = "";
-					String password = "";
+					String username = params.get("username");
+					String password = params.get("password");
 					
 					loginUser(username, password);
 				}
 				else if(intent.equals("createAccount"))
 				{
-					String username = "";
-					String password = "";
+					String username = params.get("username");
+					String password = params.get("password");
 					
 					this.userID = this.connectedServer.createUser(username, password);
 				}
