@@ -8,6 +8,7 @@ public class ClientConnection extends Thread {
 	private String userID;
 	private Socket connectedSocket;
 	private SpookyChessServer connectedServer;
+	private boolean inGame; // flag that tracks whether this client is currently in a game or not
 	
 	private BufferedReader bufferedInput;
 	private PrintWriter outputWriter;
@@ -15,10 +16,12 @@ public class ClientConnection extends Thread {
 	public ClientConnection(Socket connectedSocket, SpookyChessServer spookyChessServer)
 	{
 		this.connectedServer = spookyChessServer;
+		this.connectedSocket = connectedSocket;
+		inGame = false;
 		
 		try {
-			this.bufferedInput = new BufferedReader(new InputStreamReader(connectedSocket.getInputStream()));
-			this.outputWriter = new PrintWriter(connectedSocket.getOutputStream(), true);
+			this.bufferedInput = new BufferedReader(new InputStreamReader(this.connectedSocket.getInputStream()));
+			this.outputWriter = new PrintWriter(this.connectedSocket.getOutputStream(), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -52,6 +55,12 @@ public class ClientConnection extends Thread {
 	public void writeData(String toWrite)
 	{
 		this.outputWriter.print(toWrite);
+	}
+	
+	// mutator method for inGame variable.
+	public void setInGame(boolean inGame)
+	{
+		this.inGame = inGame;
 	}
 	
 	public boolean close()
