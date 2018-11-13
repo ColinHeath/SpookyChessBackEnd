@@ -14,7 +14,6 @@ import java.util.Scanner;
 import java.util.Vector;
 
 
-
 public class SpookyChessServer {
 	// Final Vars
 	public static final int PORT = 6789;
