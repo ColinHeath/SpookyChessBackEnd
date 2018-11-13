@@ -32,6 +32,7 @@ public class ClientConnection extends Thread {
 	public boolean loginUser(String userID, String password)
 	{
 		//TODO: Use JDBC to login the user. Shouldn't be terribly difficult.
+		// Make sure to make use of functions in SpookyChessServer scs.createUser() or scs.verifyAccount()
 		return false;
 	}
 	
@@ -41,9 +42,13 @@ public class ClientConnection extends Thread {
 		String inputLine;
 		
 		try {
-			while((inputLine = this.bufferedInput.readLine()) != null)
+			while((inputLine = this.bufferedInput.readLine()) != "")
 			{
-				totalInput += inputLine + "\n";
+				if(inputLine.length() >= 3 && inputLine.substring(0, 3).equals("GET")) // only keep GET requests
+				{
+					totalInput += inputLine + "\n";
+					System.out.println("Received GET request: "+inputLine);
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -84,5 +89,6 @@ public class ClientConnection extends Thread {
 		//When the reader has text, check if it's a login request. If so, do your thing.
 		//Otherwise, ignore it. Let GameConnection take other values out.
 		//Not sure how to check for one value while saving others for removal (buffering within the class?)
+		readData();
 	}
 }

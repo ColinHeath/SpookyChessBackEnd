@@ -17,7 +17,7 @@ import java.util.Vector;
 
 public class SpookyChessServer {
 	// Final Vars
-	public static final int PORT = 6789;
+	public static final int PORT = 8080;
 	public static final String DBURL = "jdbc:mysql://localhost:3306/spookychess";
 	public static final String DBUSERNAME = "root";
 	public static final String DBPASSWORD = "root";
