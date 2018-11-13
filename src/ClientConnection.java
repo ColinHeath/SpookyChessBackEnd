@@ -1,3 +1,5 @@
+
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,13 +9,15 @@ import java.net.Socket;
 import java.util.Hashtable;
 
 public class ClientConnection extends Thread {
-	private String userID;
+	private int userID = -1;
 	private Socket connectedSocket;
 	private SpookyChessServer connectedServer;
 	private boolean inGame; // flag that tracks whether this client is currently in a game or not
 	
 	private BufferedReader bufferedInput;
 	private PrintWriter outputWriter;
+	private boolean isRunning;
+	private boolean inGame;
 	
 	public ClientConnection(Socket connectedSocket, SpookyChessServer spookyChessServer)
 	{
@@ -28,32 +32,62 @@ public class ClientConnection extends Thread {
 			e.printStackTrace();
 		}
 		
+		this.inGame = false;
+		this.isRunning = true;
+		
 		this.start();
 	}
 	
-	public boolean loginUser(String userID, String password)
+	public boolean loginUser(String userName, String password)
 	{
+<<<<<<< HEAD
 		//TODO: Use JDBC to login the user. Shouldn't be terribly difficult.
 		// Make sure to make use of functions in SpookyChessServer scs.createUser() or scs.verifyAccount()
 		return false;
+=======
+		//TODO: Make outputs realistic for Connor's server messaging scheme.
+		
+		int[] loginResult = this.connectedServer.verifyAccount(userName, password);
+		
+		if(loginResult != null)
+		{
+			this.userID = loginResult[2];
+			
+			this.outputWriter.write("Successfully logged in!");
+			this.outputWriter.write("Wins: " + loginResult[0]);
+			this.outputWriter.write("Losses: " + loginResult[1]);
+		}
+		else
+		{
+			this.outputWriter.write("Login Failed. Please create an account.");
+		}
+		
+		return (this.userID != -1);
+>>>>>>> 5d1e2ab961dce923736dc8db074910cc7daf82bd
 	}
 	
 	public String readData()
 	{
 		String totalInput = "";
-		String inputLine;
-		
-		try {
+
+		try
+		{
+			String inputLine;
+			
 			while((inputLine = this.bufferedInput.readLine()) != null)
 			{
 				totalInput += inputLine + "\n";
 				System.out.println(inputLine);
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
-		
-		return totalInput;
+		catch(IOException ioe)
+		{
+			System.out.println("An error occurred reading from socket: " + this.getName());
+		}
+		finally
+		{
+			return totalInput;	
+		}
 	}
 
 	public void writeData(String toWrite)
@@ -61,6 +95,7 @@ public class ClientConnection extends Thread {
 		this.outputWriter.print(toWrite);
 	}
 	
+<<<<<<< HEAD
 	// mutator method for inGame variable.
 	public void setInGame(boolean inGame)
 	{
@@ -68,26 +103,34 @@ public class ClientConnection extends Thread {
 	}
 	
 	public boolean close()
+=======
+	public void close()
+>>>>>>> 5d1e2ab961dce923736dc8db074910cc7daf82bd
 	{
+		this.isRunning = false;
 		
-		try {
+		try
+		{
 			this.connectedSocket.close();
-			this.join();
-			return true;
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			return false;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
+			this.join();	
+		}
+		catch(IOException ioe)
+		{
+			System.out.println("An exception occurred while shutting down ClientConnection: " + ioe.getMessage());
+		}
+		catch(InterruptedException ie)
+		{
+			System.out.println("An exception occurred while shutting down ClientConnection: " + ie.getMessage());
 		}
 	}
 	
 	public void run()
 	{
+
 		//When the reader has text, check if it's a login request. If so, do your thing.
 		//Otherwise, ignore it. Let GameConnection take other values out.
 		//Not sure how to check for one value while saving others for removal (buffering within the class?)
+<<<<<<< HEAD
 		String request = readData();
 		
 		/* Use the below code if we are using HTTP Headers to transfer info (rather than URL parameters) */
@@ -106,6 +149,41 @@ public class ClientConnection extends Thread {
 		} catch (IllegalArgumentException | IOException e) {
 			e.printStackTrace();
 		}
+=======
+		while(isRunning)
+		{
+			if(inGame)
+			{
+				//Do Game Things. Decided once GameConnection work starts for real.
+			}
+			else
+			{
+				String currentRequest = this.readData();
+				
+				/*
+				 * Maybe parse currentRequest into an object using GSON or something of that ilk.
+				 * Doesn't really matter, just find a way to get parameters out of it.
+				 */
+				
+				String intent = ""; //TODO: Get a real value here, from the reader.
+				if(intent.equals("login"))
+				{
+					String username = "";
+					String password = "";
+					
+					loginUser(username, password);
+				}
+				else if(intent.equals("createAccount"))
+				{
+					String username = "";
+					String password = "";
+					
+					this.userID = this.connectedServer.createUser(username, password);
+				}
+			}
+		}
+		
+>>>>>>> 5d1e2ab961dce923736dc8db074910cc7daf82bd
 	}
 }
 
