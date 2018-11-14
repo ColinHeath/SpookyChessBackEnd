@@ -1,4 +1,3 @@
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,9 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Scanner;
+import java.util.Set;
 import java.util.Vector;
 
 
@@ -22,9 +22,9 @@ public class SpookyChessServer {
 	public static final String DBPASSWORD = "root";
 	
 	// Instance Variables
-	private Queue<ClientConnection> matchmakingQueue = new LinkedList<ClientConnection>(); // MODIFICATION: DON'T NEED NEXTUPCONNECTION
-	private Vector<ClientConnection> openConnections = new Vector<ClientConnection>();
-	private Vector<GameConnection> games = new Vector<GameConnection>(); // MODIFICATION - NOT OPENGAMES
+	private Queue<ClientConnection> matchmakingQueue = new LinkedList<ClientConnection>();
+	private Set<ClientConnection> openConnections = new HashSet<ClientConnection>();
+	private Vector<GameConnection> games = new Vector<GameConnection>();
 	
 	// Constructor
 	public SpookyChessServer(int port) {
