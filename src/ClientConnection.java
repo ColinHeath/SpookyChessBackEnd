@@ -26,8 +26,9 @@ public class ClientConnection extends Thread {
 	{
 		this.connectedServer = spookyChessServer;
 		this.connectedSocket = connectedSocket;
-		inGame = false;
 		gc = null;
+		this.inGame = false;
+		this.isRunning = true;
 		
 		try {
 			this.bufferedInput = new BufferedReader(new InputStreamReader(this.connectedSocket.getInputStream()));
@@ -35,9 +36,6 @@ public class ClientConnection extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		this.inGame = false;
-		this.isRunning = true;
 		
 		this.start();
 	}
@@ -193,16 +191,30 @@ public class ClientConnection extends Thread {
 		//Not sure how to check for one value while saving others for removal (buffering within the class?)
 		while(isRunning)
 		{
+			// Parse our current request.
+			String currentRequest = this.readData();
+			Map<String, String> params = parseRequest(currentRequest);
+			String intent = params.get("function");
+			
 			if(inGame)
 			{
-				//Do Game Things. Decided once GameConnection work starts for real.
+				// Do Game Things.
+				if(intent.equals("updateBoard"))
+				{
+					
+				}
+				else if(intent.equals("updateLeaderboard"))
+				{
+					
+				}
+				else
+				{
+					throw new IllegalArgumentException("Unsupported function request: '"+intent+"'");
+				}
 			}
 			else
 			{
-				String currentRequest = this.readData();
-				Map<String, String> params = parseRequest(currentRequest);
-				
-				String intent = params.get("function");
+				// Handle non-game Things.
 				if(intent.equals("login"))
 				{
 					String username = params.get("username");
@@ -219,7 +231,12 @@ public class ClientConnection extends Thread {
 				}
 				else if(intent.equals("joinMatchmaking"))
 				{
-					connectedServer.addToMatchmakingQueue(this);
+					connectedServer.addToMatchmakingQueue(this); // when the queue pairs this user, a GC will be made,
+						//	whose constructor will call joinGame() on this ClientConnection.
+				}
+				else
+				{
+					throw new IllegalArgumentException("Unsupported function request: '"+intent+"'");
 				}
 			}
 		}
