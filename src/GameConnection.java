@@ -7,6 +7,8 @@ public class GameConnection {
 	{
 		this.left = left;
 		this.left.joinGame(this); // sets GC, sets inGame, and notifies Client
+		
+		this.right = right;
 		this.right.joinGame(this);
 		
 		this.scs = scs;
@@ -15,8 +17,8 @@ public class GameConnection {
 	// request method for ClientConnection (gives info on the other player's username)
 	public String opponentName(ClientConnection requester)
 	{
-		if(requester.equals(left)) return right.username();
-		else return left.username();
+		if(requester.equals(left)) return right.getUsername();
+		else return left.getUsername();
 	}
 	
 	// request method for ClientConnection (tells requesting Client if they're going first)
@@ -26,6 +28,7 @@ public class GameConnection {
 		else return false;
 	}
 	
+	//TODO: Establish a lock or something to keep turn order in game.
 	// sends the given board state to the opponent
 	public void transmitBoardState(ClientConnection requester, String boardState)
 	{
@@ -75,5 +78,7 @@ public class GameConnection {
 		left.close();
 		right.close();
 	}
+	
+	//TODO: Write a game-end method.
 }
 

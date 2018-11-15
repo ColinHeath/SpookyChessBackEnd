@@ -20,7 +20,7 @@ public class ClientConnection extends Thread {
 	private String username = "Guest"; // will get updated on successful login or account creation
 	private Socket connectedSocket;
 	private SpookyChessServer connectedServer;
-	private GameConnection gc;
+	private GameConnection connectedGame;
 	private boolean inGame; // flag that tracks whether this client is currently in a game or not
 	
 	private BufferedReader bufferedInput;
@@ -31,14 +31,17 @@ public class ClientConnection extends Thread {
 	{
 		this.connectedServer = spookyChessServer;
 		this.connectedSocket = connectedSocket;
-		gc = null;
+		this.connectedGame = null;
 		this.inGame = false;
 		this.isRunning = true;
 		
-		try {
+		try
+		{
 			this.bufferedInput = new BufferedReader(new InputStreamReader(this.connectedSocket.getInputStream()));
 			this.outputWriter = new PrintWriter(this.connectedSocket.getOutputStream(), true);
-		} catch (IOException e) {
+		}
+		catch (IOException e) //TODO: Consider closing the connection here, because there's almost no point in persisting a readless, writeless connection.
+		{
 			e.printStackTrace();
 		}
 		
@@ -48,7 +51,8 @@ public class ClientConnection extends Thread {
 	public boolean loginUser(String userName, String password)
 	{
 		int[] record = connectedServer.verifyAccount(username, password);
-		if(record==null)
+		
+		if(record == null)
 		{
 			String response = "valid=false";
 			sendToClient(response);
@@ -56,8 +60,8 @@ public class ClientConnection extends Thread {
 		}
 		else
 		{
-			this.userID=record[2];
-			String response = "valid=true&userID="+record[2]+"&wins="+record[0]+"&losses="+record[1];
+			this.userID = record[2];
+			String response = "valid=true&userID=" + record[2] + "&wins=" + record[0] + "&losses=" + record[1];
 			this.username = userName;
 			sendToClient(response);
 			return true;
@@ -67,7 +71,7 @@ public class ClientConnection extends Thread {
 	public boolean createAccount(String userName, String password)
 	{
 		int result = this.connectedServer.createUser(username, password);
-		if(result==-1)
+		if(result == -1)
 		{
 			String response = "valid=false";
 			sendToClient(response);
@@ -93,15 +97,15 @@ public class ClientConnection extends Thread {
 		try
 		{
 			String inputLine;
-			inputLine = this.bufferedInput.readLine();
-			while( !inputLine.equals("") ) // HTTP requests end in an empty line
+			//inputLine = this.bufferedInput.readLine();
+			while(!(inputLine = this.bufferedInput.readLine()).equals("")) // HTTP requests end in an empty line
 			{
 				if(inputLine.length() >= 3 && inputLine.substring(0, 3).equals("GET")) // only keep GET request line
 				{
 					totalInput += inputLine + "\n";
 					System.out.println(inputLine);
 				}
-				inputLine = this.bufferedInput.readLine();
+				//inputLine = this.bufferedInput.readLine();
 			}
 		}
 		catch(IOException ioe)
@@ -115,7 +119,7 @@ public class ClientConnection extends Thread {
 	}
 	
 	// Accessors
-	public String username() {return username;}
+	public String getUsername() {return username;}
 
 	public void writeData(String toWrite)
 	{
@@ -131,7 +135,7 @@ public class ClientConnection extends Thread {
 	// mutator method for gc variable.
 	public void setGC(GameConnection gc)
 	{
-		this.gc = gc;
+		this.connectedGame = gc;
 	}
 	
 	// send board state to this client
@@ -150,7 +154,7 @@ public class ClientConnection extends Thread {
 	// Calls SpookyChessServer's updateStats method as long as this Client isn't a guest
 	void updateStats(boolean isWinner)
 	{
-		if(userID!=-1)
+		if(userID != -1)
 		{
 			connectedServer.updateStats(isWinner, userID);
 		}
@@ -160,7 +164,7 @@ public class ClientConnection extends Thread {
 	public void joinGame(GameConnection gc)
 	{
 		inGame = true;
-		this.gc = gc;
+		this.connectedGame = gc;
 		// send response to client that we've joined a game
 		// include opponent name and whether they're moving first
 		String opponentName = gc.opponentName(this);
@@ -196,7 +200,7 @@ public class ClientConnection extends Thread {
 		String[]tokens = strippedRequest.split("=|\\&");
 		
 		assert tokens.length % 2 == 0 : " Number of tokens is odd"; // keys and values must be equal, thus there must be an even number total
-		for(int i=0; i<tokens.length; i+=2)
+		for(int i = 0; i < tokens.length; i+=2)
 		{
 			System.out.println(tokens[i]+": "+tokens[i+1]);
 			params.put(tokens[i], tokens[i+1]);
@@ -209,7 +213,6 @@ public class ClientConnection extends Thread {
 
 		//When the reader has text, check if it's a login request. If so, do your thing.
 		//Otherwise, ignore it. Let GameConnection take other values out.
-		//Not sure how to check for one value while saving others for removal (buffering within the class?)
 		while(isRunning)
 		{
 			// Parse our current request.
@@ -223,16 +226,16 @@ public class ClientConnection extends Thread {
 				if(intent.equals("updateBoard"))
 				{
 					String boardState = params.get("boardState");
-					gc.transmitBoardState(this, boardState);
+					connectedGame.transmitBoardState(this, boardState);
 				}
 				else if(intent.equals("updateLeaderboard"))
 				{
 					String isWinnerStr = params.get("result");
 					
 					if(isWinnerStr.equals("win"))
-						gc.updateLeaderboard(this, true);
+						connectedGame.updateLeaderboard(this, true);
 					else if(isWinnerStr.equals("lose"))
-						gc.updateLeaderboard(this, false);
+						connectedGame.updateLeaderboard(this, false);
 					else // if it's neither "win" nor "lose", there has been a mistake
 						throw new IllegalArgumentException("'result' must be either 'win' or 'lose'! Received: '"+isWinnerStr+"'");
 				}
