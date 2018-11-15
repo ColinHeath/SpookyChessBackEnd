@@ -6,6 +6,11 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -123,9 +128,16 @@ public class ClientConnection extends Thread {
 		this.inGame = inGame;
 	}
 	
+	// mutator method for gc variable.
 	public void setGC(GameConnection gc)
 	{
 		this.gc = gc;
+	}
+	
+	// send board state to this client
+	public void sendBoardState(String boardState)
+	{
+		sendToClient("boardState="+boardState);
 	}
 	
 	// message the Client
@@ -133,6 +145,15 @@ public class ClientConnection extends Thread {
 	{
 		this.outputWriter.print(response);
 		this.outputWriter.flush();
+	}
+	
+	// Calls SpookyChessServer's updateStats method as long as this Client isn't a guest
+	void updateStats(boolean isWinner)
+	{
+		if(userID!=-1)
+		{
+			connectedServer.updateStats(isWinner, userID);
+		}
 	}
 	
 	// sets inGame, sets GC, and notifies client
@@ -201,11 +222,19 @@ public class ClientConnection extends Thread {
 				// Do Game Things.
 				if(intent.equals("updateBoard"))
 				{
-					
+					String boardState = params.get("boardState");
+					gc.transmitBoardState(this, boardState);
 				}
 				else if(intent.equals("updateLeaderboard"))
 				{
+					String isWinnerStr = params.get("result");
 					
+					if(isWinnerStr.equals("win"))
+						gc.updateLeaderboard(this, true);
+					else if(isWinnerStr.equals("lose"))
+						gc.updateLeaderboard(this, false);
+					else // if it's neither "win" nor "lose", there has been a mistake
+						throw new IllegalArgumentException("'result' must be either 'win' or 'lose'! Received: '"+isWinnerStr+"'");
 				}
 				else
 				{

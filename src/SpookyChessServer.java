@@ -188,6 +188,47 @@ public class SpookyChessServer {
 		games.add(new GameConnection(left, right, this));
 	}
 	
+	// Updates this user's stats appropriately (increments win or loss by 1 depending on value of isWinner)
+	void updateStats(boolean isWinner, int userID)
+	{
+		String field = "";
+		if(isWinner) field = "wins";
+		else field = "losses";
+		int count = 0;
+		// connect to database
+		Connection conn = null;
+		Statement st = null;
+		ResultSet rs = null;
+		String connection = DBURL+"?user="+DBUSERNAME+"&password="+DBPASSWORD;
+		try
+		{
+			Class.forName("com.mysql.cj.jdbc.Driver"); // Dynamically loads the class specified in the String
+			conn = DriverManager.getConnection(connection); // Uses the last loaded Driver
+			st = conn.createStatement();
+			
+			rs = st.executeQuery("SELECT "+field+" FROM Users WHERE userID="+userID);
+			while(rs.next()) {
+				count = rs.getInt(field) + 1;
+			}
+			if(rs!=null) {rs.close();}
+			
+			st.executeUpdate("UPDATE Users SET "+field+"="+count+" WHERE userID="+userID);
+			
+		} catch (SQLException sqle) {
+			System.out.println("sqle: " + sqle.getMessage());
+		} catch (ClassNotFoundException cnfe) {
+			System.out.println("cnfe: " + cnfe.getMessage());
+		} finally {
+			try {
+				if(rs!=null) {rs.close();}
+				if(st!=null) {st.close();}
+				if(conn!=null) {conn.close();}
+			} catch(SQLException sqle) {
+				System.out.println("sqle: " + sqle.getMessage());
+			}
+		}
+	}
+	
 	public static void main(String[] args) {
 		new SpookyChessServer(PORT);
 	}
