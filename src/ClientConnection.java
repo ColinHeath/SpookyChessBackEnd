@@ -12,6 +12,7 @@ import java.util.Map;
 
 public class ClientConnection extends Thread {
 	private int userID = -1;
+	private String username = "Guest"; // will get updated on successful login or account creation
 	private Socket connectedSocket;
 	private SpookyChessServer connectedServer;
 	private GameConnection gc;
@@ -43,28 +44,44 @@ public class ClientConnection extends Thread {
 	
 	public boolean loginUser(String userName, String password)
 	{
-		//TODO: Make outputs realistic for Connor's server messaging scheme.
-		
-		int[] loginResult = this.connectedServer.verifyAccount(userName, password);
-		
-		if(loginResult != null)
+		int[] record = connectedServer.verifyAccount(username, password);
+		if(record==null)
 		{
-			this.userID = loginResult[2];
-			
-			this.outputWriter.write("Successfully logged in!");
-			this.outputWriter.write("Wins: " + loginResult[0]);
-			this.outputWriter.write("Losses: " + loginResult[1]);
+			String response = "valid=false";
+			sendToClient(response);
+			return false;
 		}
 		else
 		{
-			this.outputWriter.write("Login Failed. Please create an account.");
+			this.userID=record[2];
+			String response = "valid=true&userID="+record[2]+"&wins="+record[0]+"&losses="+record[1];
+			this.username = userName;
+			sendToClient(response);
+			return true;
 		}
-		
-		return (this.userID != -1);
+	}
+	
+	public boolean createAccount(String userName, String password)
+	{
+		int result = this.connectedServer.createUser(username, password);
+		if(result==-1)
+		{
+			String response = "valid=false";
+			sendToClient(response);
+			return false;
+		}
+		else
+		{
+			this.userID = result;
+			String response = "valid=true&userID="+result;
+			this.username = userName;
+			sendToClient(response);
+			return true;
+		}
 	}
 	
 	/* Note: to demo this, run a SpookyChessServer on port 8080 then paste the following into your web browser's URL bar:
-	 * 	http://localhost:8080/?intent=login&username=ben&password=sponge
+	 * 	http://localhost:8080/?function=login&username=ben&password=sponge
 	 */
 	public String readData()
 	{
@@ -93,6 +110,9 @@ public class ClientConnection extends Thread {
 			return totalInput;	
 		}
 	}
+	
+	// Accessors
+	public String username() {return username;}
 
 	public void writeData(String toWrite)
 	{
@@ -108,6 +128,25 @@ public class ClientConnection extends Thread {
 	public void setGC(GameConnection gc)
 	{
 		this.gc = gc;
+	}
+	
+	// message the Client
+	private void sendToClient(String response)
+	{
+		this.outputWriter.print(response);
+		this.outputWriter.flush();
+	}
+	
+	// sets inGame, sets GC, and notifies client
+	public void joinGame(GameConnection gc)
+	{
+		inGame = true;
+		this.gc = gc;
+		// send response to client that we've joined a game
+		// include opponent name and whether they're moving first
+		String opponentName = gc.opponentName(this);
+		boolean movingFirst = gc.movingFirst(this);
+		sendToClient("opponentName="+opponentName+"&moveFirst="+movingFirst);
 	}
 	
 	public void close()
@@ -163,42 +202,24 @@ public class ClientConnection extends Thread {
 				String currentRequest = this.readData();
 				Map<String, String> params = parseRequest(currentRequest);
 				
-				String intent = params.get("intent");
+				String intent = params.get("function");
 				if(intent.equals("login"))
 				{
 					String username = params.get("username");
 					String password = params.get("password");
 					
-					int[] record = connectedServer.verifyAccount(username, password);
-					if(record[0]==-1)
-					{
-						String response = "valid=false";
-						// TODO: send response to Client
-					}
-					else
-					{
-						this.userID=record[2];
-						String response = "valid=true&userID="+record[2]+"&wins="+record[0]+"&losses="+record[1];
-						// TODO: send response to Client
-					}
+					loginUser(username, password);
 				}
 				else if(intent.equals("createAccount"))
 				{
 					String username = params.get("username");
 					String password = params.get("password");
 					
-					int result = this.connectedServer.createUser(username, password);
-					if(result==-1)
-					{
-						String response = "valid=false";
-						// TODO: send response to Client
-					}
-					else
-					{
-						this.userID = result;
-						String response = "valid=true&userID="+result;
-						// TODO: send response to Client
-					}
+					createAccount(username, password);
+				}
+				else if(intent.equals("joinMatchmaking"))
+				{
+					connectedServer.addToMatchmakingQueue(this);
 				}
 			}
 		}

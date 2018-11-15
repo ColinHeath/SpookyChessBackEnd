@@ -87,19 +87,29 @@ public class SpookyChessServer {
 			Class.forName("com.mysql.cj.jdbc.Driver"); // Dynamically loads the class specified in the String
 			conn = DriverManager.getConnection(connection); // Uses the last loaded Driver
 			st = conn.createStatement();
-			String update = "INSERT INTO Users(username, password, wins, losses) "
-					+ "VALUES (\""+ username+"\",\""+password+"\", 0, 0);";
-			st.executeUpdate(update);
 			
-			// Now get userID
-			st = conn.createStatement();
-			ps = conn.prepareStatement("SELECT * FROM Users WHERE username=? AND password=?");
-			ps.setString(1, username); // question marks count from 1 up
-			ps.setString(2, password);
+			// Make sure this user doesn't already exist
+			ps = conn.prepareStatement("SELECT * FROM Users WHERE username=?");
+			ps.setString(1, username);
 			rs = ps.executeQuery();
+			boolean alreadyExists = false;
+			while(rs.next()) alreadyExists = true;
 			
-			while(rs.next()) {
-				userID = rs.getInt("userID");
+			if(!alreadyExists)
+			{
+				String update = "INSERT INTO Users(username, password, wins, losses) "
+						+ "VALUES (\""+ username+"\",\""+password+"\", 0, 0);";
+				st.executeUpdate(update);
+				
+				// Now get userID
+				ps = conn.prepareStatement("SELECT * FROM Users WHERE username=? AND password=?");
+				ps.setString(1, username); // question marks count from 1 up
+				ps.setString(2, password);
+				rs = ps.executeQuery();
+				
+				while(rs.next()) {
+					userID = rs.getInt("userID");
+				}
 			}
 		} catch (SQLException sqle) {
 			System.out.println("sqle: " + sqle.getMessage());
@@ -115,7 +125,7 @@ public class SpookyChessServer {
 			}
 		}
 		
-		return userID;
+		return userID; // will return -1 if username already exists
 	}
 	
 	// Checks whether the given credentials already exists in the DB. If so, returns wins, losses, and userID as an int array
