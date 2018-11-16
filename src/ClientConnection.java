@@ -224,7 +224,12 @@ public class ClientConnection extends Thread {
 			// Parse our current request.
 			String currentRequest = this.readData();
 			Map<String, String> params = parseRequest(currentRequest);
-			String intent = params.get("function");
+			String intent = "";
+			try {
+				intent = params.get("function");
+			} catch(NullPointerException e) {
+				continue;
+			}
 			
 			if(inGame)
 			{
