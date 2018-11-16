@@ -2,6 +2,7 @@ public class GameConnection {
 	private ClientConnection left, right;
 	private SpookyChessServer scs;
 	private boolean alreadyUpdatedScores = false;
+	private boolean leftTurnToMove = false;
 	
 	public GameConnection(ClientConnection left, ClientConnection right, SpookyChessServer scs)
 	{
@@ -32,8 +33,24 @@ public class GameConnection {
 	// sends the given board state to the opponent
 	public void transmitBoardState(ClientConnection requester, String boardState)
 	{
-		if(requester.equals(left)) right.sendBoardState(boardState);
-		else left.sendBoardState(boardState);
+		if(this.leftTurnToMove)
+		{
+			if(requester.equals(left))
+			{
+				right.sendBoardState(boardState);
+				this.leftTurnToMove = !this.leftTurnToMove;
+			}
+			else return;
+		}
+		else
+		{
+			if(requester.equals(left)) return;
+			else
+			{
+				left.sendBoardState(boardState);
+				this.leftTurnToMove = !this.leftTurnToMove;
+			}
+		}
 	}
 	
 	// Update the wins/losses for both the requesting client and their opponent.
