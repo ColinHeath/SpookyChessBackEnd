@@ -1,5 +1,4 @@
 
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -103,7 +102,7 @@ public class ClientConnection extends Thread {
 				if(inputLine.length() >= 3 && inputLine.substring(0, 3).equals("GET")) // only keep GET request line
 				{
 					totalInput += inputLine + "\n";
-					System.out.println(inputLine);
+					System.out.println("Received request: "+inputLine);
 				}
 				//inputLine = this.bufferedInput.readLine();
 			}
@@ -120,11 +119,6 @@ public class ClientConnection extends Thread {
 	
 	// Accessors
 	public String getUsername() {return username;}
-
-	public void writeData(String toWrite)
-	{
-		this.outputWriter.print(toWrite);
-	}
 	
 	// mutator method for inGame variable.
 	public void setInGame(boolean inGame)
@@ -147,8 +141,15 @@ public class ClientConnection extends Thread {
 	// message the Client
 	private void sendToClient(String response)
 	{
-		this.outputWriter.print(response);
+		String OUTPUT = response;
+		String OUTPUT_HEADERS = "HTTP/1.1 200 OK\r\n" +
+		    "Content-Type: text/plain\r\n" + 
+		    "Content-Length: ";
+		String OUTPUT_END_OF_HEADERS = "\r\n\r\n";
+		String httpResponse = OUTPUT_HEADERS + OUTPUT.length() + OUTPUT_END_OF_HEADERS + OUTPUT;
+		this.outputWriter.print(httpResponse);
 		this.outputWriter.flush();
+		System.out.println("Sent: "+httpResponse);
 	}
 	
 	// Calls SpookyChessServer's updateStats method as long as this Client isn't a guest
@@ -195,16 +196,21 @@ public class ClientConnection extends Thread {
 	{
 		System.out.println("In parseRequest");
 		Map<String, String> params = new HashMap<String, String>();
-		String strippedRequest = request.split(" ")[1].split("\\?")[1];
-		// Use regex to split on = and &
-		String[]tokens = strippedRequest.split("=|\\&");
-		
-		assert tokens.length % 2 == 0 : " Number of tokens is odd"; // keys and values must be equal, thus there must be an even number total
-		for(int i = 0; i < tokens.length; i+=2)
+		try
 		{
-			System.out.println(tokens[i]+": "+tokens[i+1]);
-			params.put(tokens[i], tokens[i+1]);
+			String strippedRequest = request.split(" ")[1].split("\\?")[1];
+			// Use regex to split on = and &
+			String[]tokens = strippedRequest.split("=|\\&");
+			assert tokens.length % 2 == 0 : " Number of tokens is odd"; // keys and values must be equal, thus there must be an even number total
+			for(int i = 0; i < tokens.length; i+=2)
+			{
+				System.out.println(tokens[i]+": "+tokens[i+1]);
+				params.put(tokens[i], tokens[i+1]);
+			}
+		} catch(ArrayIndexOutOfBoundsException e) {
+			return null;
 		}
+		
 		return params;
 	}
 	
