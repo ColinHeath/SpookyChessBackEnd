@@ -144,15 +144,15 @@ public class ClientConnection extends Thread {
 	// message the Client
 	private void sendToClient(String response)
 	{
-		String OUTPUT = response;
+		/*String OUTPUT = response;
 		String OUTPUT_HEADERS = "HTTP/1.1 200 OK\r\n" +
 		    "Content-Type: text/plain\r\n" + 
 		    "Content-Length: ";
 		String OUTPUT_END_OF_HEADERS = "\r\n\r\n";
-		String httpResponse = OUTPUT_HEADERS + OUTPUT.length() + OUTPUT_END_OF_HEADERS + OUTPUT;
-		this.outputWriter.print(httpResponse);
+		String httpResponse = OUTPUT_HEADERS + OUTPUT.length() + OUTPUT_END_OF_HEADERS + OUTPUT;*/
+		this.outputWriter.print(response);
 		this.outputWriter.flush();
-		System.out.println("Sent: "+httpResponse);
+		System.out.println("Sent: "+ response);
 	}
 	
 	// Calls SpookyChessServer's updateStats method as long as this Client isn't a guest
@@ -226,7 +226,10 @@ public class ClientConnection extends Thread {
 		{
 			// Parse our current request.
 			String currentRequest = this.readData();
-			Map<String, String> params = parseRequest(currentRequest);
+			
+			this.sendToClient("Message Received: " + currentRequest);
+			
+/*			Map<String, String> params = parseRequest(currentRequest);
 			String intent = "";
 			try {
 				intent = params.get("function");
@@ -284,7 +287,7 @@ public class ClientConnection extends Thread {
 				{
 					throw new IllegalArgumentException("Unsupported function request: '"+intent+"'");
 				}
-			}
+			}*/
 		}
 	}
 }
