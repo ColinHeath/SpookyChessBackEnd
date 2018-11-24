@@ -99,13 +99,16 @@ public class ClientConnection extends Thread {
 			//inputLine = this.bufferedInput.readLine();
 			while(!(inputLine = this.bufferedInput.readLine()).equals("")) // HTTP requests end in an empty line
 			{
-				if(inputLine.length() >= 3 && inputLine.substring(0, 3).equals("GET")) // only keep GET request line
+				totalInput += inputLine + "\n";
+				/*if(inputLine.length() >= 3 && inputLine.substring(0, 3).equals("GET")) // only keep GET request line
 				{
 					totalInput += inputLine + "\n";
 					System.out.println("Received request: "+inputLine);
-				}
+				}*/
 				//inputLine = this.bufferedInput.readLine();
 			}
+			
+			System.out.println("Message from client: " + totalInput);
 		}
 		catch(IOException ioe)
 		{
