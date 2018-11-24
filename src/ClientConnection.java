@@ -108,7 +108,7 @@ public class ClientConnection extends Thread {
 				//inputLine = this.bufferedInput.readLine();
 			}
 			
-			System.out.println("Message from client: " + totalInput);
+			if(!totalInput.equals("")) System.out.println("Message from client: " + totalInput);
 		}
 		catch(IOException ioe)
 		{
@@ -150,7 +150,7 @@ public class ClientConnection extends Thread {
 		    "Content-Length: ";
 		String OUTPUT_END_OF_HEADERS = "\r\n\r\n";
 		String httpResponse = OUTPUT_HEADERS + OUTPUT.length() + OUTPUT_END_OF_HEADERS + OUTPUT;*/
-		this.outputWriter.print(response);
+		this.outputWriter.println(response);
 		this.outputWriter.flush();
 		System.out.println("Sent: "+ response);
 	}
@@ -227,7 +227,7 @@ public class ClientConnection extends Thread {
 			// Parse our current request.
 			String currentRequest = this.readData();
 			
-			this.sendToClient("Message Received: " + currentRequest);
+			if(!currentRequest.equals("")) this.sendToClient("Message Received: " + currentRequest);
 			
 /*			Map<String, String> params = parseRequest(currentRequest);
 			String intent = "";
