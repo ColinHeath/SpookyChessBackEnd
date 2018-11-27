@@ -94,18 +94,11 @@ public class ClientConnection extends Thread {
 		String totalInput = "";
 
 		try
-		{
-			String inputLine;
-			//inputLine = this.bufferedInput.readLine();
-			while(!(inputLine = this.bufferedInput.readLine()).equals("")) // HTTP requests end in an empty line
+		{		
+			while(this.bufferedInput.ready())
 			{
+				String inputLine = this.bufferedInput.readLine();
 				totalInput += inputLine + "\n";
-				/*if(inputLine.length() >= 3 && inputLine.substring(0, 3).equals("GET")) // only keep GET request line
-				{
-					totalInput += inputLine + "\n";
-					System.out.println("Received request: "+inputLine);
-				}*/
-				//inputLine = this.bufferedInput.readLine();
 			}
 			
 			if(!totalInput.equals("")) System.out.println("Message from client: " + totalInput);
@@ -138,7 +131,7 @@ public class ClientConnection extends Thread {
 	// send board state to this client
 	public void sendBoardState(String boardState)
 	{
-		sendToClient("boardState="+boardState);
+		sendToClient("UpdateBoard="+boardState);
 	}
 	
 	// message the Client
@@ -173,7 +166,8 @@ public class ClientConnection extends Thread {
 		// include opponent name and whether they're moving first
 		String opponentName = gc.opponentName(this);
 		boolean movingFirst = gc.movingFirst(this);
-		sendToClient("opponentName="+opponentName+"&moveFirst="+movingFirst);
+		this.sendToClient("StartGame");
+		this.sendToClient((movingFirst) ? "SetPlayerOne" : "SetPlayerTwo");
 	}
 	
 	public void close()
@@ -229,20 +223,24 @@ public class ClientConnection extends Thread {
 			
 			if(!currentRequest.equals("")) this.sendToClient("Message Received: " + currentRequest);
 			
-/*			Map<String, String> params = parseRequest(currentRequest);
+			HashMap<String, String> params = parseParameters(currentRequest);
 			String intent = "";
-			try {
+			
+			try
+			{
 				intent = params.get("function");
-			} catch(NullPointerException e) {
+			}
+			catch(NullPointerException e)
+			{
 				continue;
 			}
 			
 			if(inGame)
 			{
 				// Do Game Things.
-				if(intent.equals("updateBoard"))
+				if(intent.equals("updateboard"))
 				{
-					String boardState = params.get("boardState");
+					String boardState = params.get("move");
 					connectedGame.transmitBoardState(this, boardState);
 				}
 				else if(intent.equals("updateLeaderboard"))
@@ -269,25 +267,50 @@ public class ClientConnection extends Thread {
 					String username = params.get("username");
 					String password = params.get("password");
 					
-					loginUser(username, password);
+					if(loginUser(username, password))
+					{
+						this.sendToClient("LoggedIn");
+					}
 				}
-				else if(intent.equals("createAccount"))
+				else if(intent.equals("register"))
 				{
 					String username = params.get("username");
 					String password = params.get("password");
 					
-					createAccount(username, password);
+					if(createAccount(username, password))
+					{
+						this.sendToClient("Registered");
+					}
 				}
-				else if(intent.equals("joinMatchmaking"))
+				else if(intent.equals("joinmatchmaking"))
 				{
 					connectedServer.addToMatchmakingQueue(this); // when the queue pairs this user, a GC will be made,
 						//	whose constructor will call joinGame() on this ClientConnection.
 				}
 				else
 				{
+					this.sendToClient("error=unknownfunction");
 					throw new IllegalArgumentException("Unsupported function request: '"+intent+"'");
 				}
-			}*/
+			}
 		}
+	}
+	
+	public HashMap<String, String> parseParameters(String inputString)
+	{
+		HashMap<String, String> parameters = new HashMap<String, String>();
+		
+		String[] splitInput = inputString.split("\n");
+		
+		for(int i = 0; i < splitInput.length; i++)
+		{
+			if(splitInput[i].matches("^.*=.*$"))
+			{
+				String[] keyValue = splitInput[i].split("=");
+				parameters.put(keyValue[0], keyValue[1]);
+			}
+		}
+		
+		return parameters;
 	}
 }
