@@ -146,13 +146,12 @@ public class ClientConnection extends Thread {
 	}
 	
 	// sets inGame, sets GC, and notifies client
-	public void joinGame(GameConnection gc)
+	public void joinGame(GameConnection gc, boolean movingFirst)
 	{
 		inGame = true;
 		this.connectedGame = gc;
 		// send response to client that we've joined a game
 		// include opponent name and whether they're moving first
-		boolean movingFirst = gc.movingFirst(this);
 		this.sendToClient("StartGame");
 		this.sendToClient((movingFirst) ? "SetPlayerOne" : "SetPlayerTwo");
 	}
@@ -238,7 +237,7 @@ public class ClientConnection extends Thread {
 					String boardState = params.get("move");
 					connectedGame.transmitBoardState(this, boardState);
 				}
-				else if(intent.equals("updateleaderboard"))
+				else if(intent.equals("endgame"))
 				{
 					String isWinnerStr = params.get("result");
 					

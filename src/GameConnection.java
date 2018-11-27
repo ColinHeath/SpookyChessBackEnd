@@ -2,15 +2,15 @@ public class GameConnection {
 	private ClientConnection left, right;
 	private SpookyChessServer scs;
 	private boolean alreadyUpdatedScores = false;
-	private boolean leftTurnToMove = false;
+	private boolean leftTurnToMove = true;
 	
 	public GameConnection(ClientConnection left, ClientConnection right, SpookyChessServer scs)
 	{
 		this.left = left;
-		this.left.joinGame(this); // sets GC, sets inGame, and notifies Client
+		this.left.joinGame(this, true); // sets GC, sets inGame, and notifies Client
 		
 		this.right = right;
-		this.right.joinGame(this);
+		this.right.joinGame(this, false);
 		
 		this.scs = scs;
 	}
@@ -89,15 +89,16 @@ public class GameConnection {
 			}
 			alreadyUpdatedScores = true; // set this flag so we don't accidentally duplicate the update
 		}
+		
+		this.close();
 	}
 	
 	// Close both of this game's Client Connections.
 	public void close()
 	{
-		left.close();
-		right.close();
+		return;
 	}
 	
-	//TODO: Write a game-end method.
+	
 }
 
