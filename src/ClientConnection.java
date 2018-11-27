@@ -49,7 +49,7 @@ public class ClientConnection extends Thread {
 	
 	public boolean loginUser(String userName, String password)
 	{
-		int[] record = connectedServer.verifyAccount(username, password);
+		int[] record = connectedServer.verifyAccount(userName, password);
 		
 		if(record == null)
 		{
@@ -60,28 +60,22 @@ public class ClientConnection extends Thread {
 		else
 		{
 			this.userID = record[2];
-			String response = "valid=true&userID=" + record[2] + "&wins=" + record[0] + "&losses=" + record[1];
 			this.username = userName;
-			sendToClient(response);
 			return true;
 		}
 	}
 	
-	public boolean createAccount(String userName, String password)
+	public boolean createAccount(String potentialUsername, String password)
 	{
-		int result = this.connectedServer.createUser(username, password);
+		int result = this.connectedServer.createUser(potentialUsername, password);
 		if(result == -1)
 		{
-			String response = "valid=false";
-			sendToClient(response);
 			return false;
 		}
 		else
 		{
 			this.userID = result;
-			String response = "valid=true&userID="+result;
-			this.username = userName;
-			sendToClient(response);
+			this.username = potentialUsername;
 			return true;
 		}
 	}
@@ -137,13 +131,7 @@ public class ClientConnection extends Thread {
 	// message the Client
 	private void sendToClient(String response)
 	{
-		/*String OUTPUT = response;
-		String OUTPUT_HEADERS = "HTTP/1.1 200 OK\r\n" +
-		    "Content-Type: text/plain\r\n" + 
-		    "Content-Length: ";
-		String OUTPUT_END_OF_HEADERS = "\r\n\r\n";
-		String httpResponse = OUTPUT_HEADERS + OUTPUT.length() + OUTPUT_END_OF_HEADERS + OUTPUT;*/
-		this.outputWriter.println(response);
+		this.outputWriter.print(response);
 		this.outputWriter.flush();
 		System.out.println("Sent: "+ response);
 	}
@@ -164,7 +152,6 @@ public class ClientConnection extends Thread {
 		this.connectedGame = gc;
 		// send response to client that we've joined a game
 		// include opponent name and whether they're moving first
-		String opponentName = gc.opponentName(this);
 		boolean movingFirst = gc.movingFirst(this);
 		this.sendToClient("StartGame");
 		this.sendToClient((movingFirst) ? "SetPlayerOne" : "SetPlayerTwo");
@@ -221,7 +208,7 @@ public class ClientConnection extends Thread {
 			// Parse our current request.
 			String currentRequest = this.readData();
 			
-			if(!currentRequest.equals("")) this.sendToClient("Message Received: " + currentRequest);
+			if(currentRequest.equals("")) continue;
 			
 			HashMap<String, String> params = parseParameters(currentRequest);
 			String intent = "";
@@ -232,7 +219,15 @@ public class ClientConnection extends Thread {
 			}
 			catch(NullPointerException e)
 			{
+				System.out.println("Error in get function");
 				continue;
+			}
+
+			if(intent.equals(null) || intent.equals("")) continue;
+			
+			if(intent.equals("disconnect"))
+			{
+				this.close();
 			}
 			
 			if(inGame)
@@ -243,7 +238,7 @@ public class ClientConnection extends Thread {
 					String boardState = params.get("move");
 					connectedGame.transmitBoardState(this, boardState);
 				}
-				else if(intent.equals("updateLeaderboard"))
+				else if(intent.equals("updateleaderboard"))
 				{
 					String isWinnerStr = params.get("result");
 					

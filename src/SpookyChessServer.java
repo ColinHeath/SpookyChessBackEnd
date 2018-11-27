@@ -17,7 +17,7 @@ import java.util.Vector;
 public class SpookyChessServer {
 	// Final Vars
 	public static final int PORT = 8080;
-	public static final String DBURL = "jdbc:mysql://localhost:3306/spookychess";
+	public static final String DBURL = "jdbc:mysql://localhost/spookychess";
 	public static final String DBUSERNAME = "root";
 	public static final String DBPASSWORD = "root";
 	
@@ -25,14 +25,32 @@ public class SpookyChessServer {
 	private Queue<ClientConnection> matchmakingQueue = new LinkedList<ClientConnection>();
 	private Set<ClientConnection> openConnections = new HashSet<ClientConnection>();
 	private Vector<GameConnection> games = new Vector<GameConnection>();
+	private Connection conn = null;
 	
 	// Constructor
 	public SpookyChessServer(int port) {
 		ServerSocket ss = null;
-		try {
+		try
+		{
+			System.out.println("Trying to connect to SQL Server");
+			Class.forName("com.mysql.cj.jdbc.Driver"); // Dynamically loads the class specified in the String
+			this.conn = DriverManager.getConnection(DBURL+"?user="+DBUSERNAME+"&password="+DBPASSWORD+"&useSSL=false"); // Uses the last loaded Driver
+			System.out.println("Connected to database.");
+		}
+		catch(ClassNotFoundException cnfe)
+		{
+			System.out.println("Exception loading SQL driver.");
+		}
+		catch(SQLException sqle)
+		{
+			System.out.println("Exception connecting to SQL Database");
+		}
+		
+		try {			
 			System.out.println("Trying to bind to port " + port);
 			ss = new ServerSocket(port);
 			System.out.println("Bound to port " + port);
+			
 			// now continuously accept new connections while also reading messages from user (use threads)
 			while (true) {
 				Socket s = ss.accept();
@@ -40,12 +58,19 @@ public class SpookyChessServer {
 				ClientConnection cc = establishConnection(s);
 				// addToMatchmakingQueue(cc); move to ClientConnection
 			}
-		} catch (IOException ioe) {
+		}
+		catch (IOException ioe)
+		{
 			System.out.println("ioe: "+ioe.getMessage());
-		} finally {
-			try {
+		}
+		finally
+		{
+			try
+			{
 				if(ss != null) ss.close();
-			} catch (IOException ioe) {
+			}
+			catch (IOException ioe)
+			{
 				System.out.println("ioe: "+ioe.getMessage());
 			}
 		}
@@ -77,49 +102,36 @@ public class SpookyChessServer {
 	{
 		int userID = -1;
 		
-		Connection conn = null;
 		Statement st = null;
 		ResultSet rs = null;
 		PreparedStatement ps = null;
-		String connection = DBURL+"?user="+DBUSERNAME+"&password="+DBPASSWORD;
+		//String connection = DBURL+"?user="+DBUSERNAME+"&password="+DBPASSWORD+"&useSSL=false";
 		try
 		{
-			Class.forName("com.mysql.cj.jdbc.Driver"); // Dynamically loads the class specified in the String
-			conn = DriverManager.getConnection(connection); // Uses the last loaded Driver
+			//Class.forName("com.mysql.cj.jdbc.Driver"); // Dynamically loads the class specified in the String
+			//conn = DriverManager.getConnection(connection); // Uses the last loaded Driver
 			st = conn.createStatement();
 			
-			// Make sure this user doesn't already exist
-			ps = conn.prepareStatement("SELECT * FROM Users WHERE username=?");
-			ps.setString(1, username);
-			rs = ps.executeQuery();
-			boolean alreadyExists = false;
-			while(rs.next()) alreadyExists = true;
+			String update = "INSERT INTO Users(username, password, wins, losses) "
+					+ "VALUES (\""+ username+"\",\""+password+"\", 0, 0);";
+			st.executeUpdate(update);
 			
-			if(!alreadyExists)
-			{
-				String update = "INSERT INTO Users(username, password, wins, losses) "
-						+ "VALUES (\""+ username+"\",\""+password+"\", 0, 0);";
-				st.executeUpdate(update);
-				
-				// Now get userID
-				ps = conn.prepareStatement("SELECT * FROM Users WHERE username=? AND password=?");
-				ps.setString(1, username); // question marks count from 1 up
-				ps.setString(2, password);
-				rs = ps.executeQuery();
-				
-				while(rs.next()) {
-					userID = rs.getInt("userID");
-				}
+			// Now get userID
+			ps = conn.prepareStatement("SELECT * FROM Users WHERE username=? AND password=?");
+			ps.setString(1, username); // question marks count from 1 up
+			ps.setString(2, password);
+			rs = ps.executeQuery();
+			
+			while(rs.next()) {
+				userID = rs.getInt("userID");
 			}
 		} catch (SQLException sqle) {
 			System.out.println("sqle: " + sqle.getMessage());
-		} catch (ClassNotFoundException cnfe) {
-			System.out.println("cnfe: " + cnfe.getMessage());
-		} finally {
+		}
+		finally {
 			try {
 				if(rs!=null) {rs.close();}
 				if(st!=null) {st.close();}
-				if(conn!=null) {conn.close();}
 			} catch(SQLException sqle) {
 				System.out.println("SQLE in SCS:createUser() finally: "+sqle.getMessage());
 			}
@@ -135,15 +147,14 @@ public class SpookyChessServer {
 		int wins = -1;
 		int losses = -1;
 		int userID = -1;
-		Connection conn = null;
 		Statement st = null;
 		ResultSet rs = null;
 		PreparedStatement ps = null;
-		String connection = DBURL+"?user="+DBUSERNAME+"&password="+DBPASSWORD;
+		//String connection = DBURL+"?user="+DBUSERNAME+"&password="+DBPASSWORD+"&useSSL=false";
 		try
 		{
-			Class.forName("com.mysql.cj.jdbc.Driver"); // Dynamically loads the class specified in the String
-			conn = DriverManager.getConnection(connection); // Uses the last loaded Driver
+			//Class.forName("com.mysql.cj.jdbc.Driver"); // Dynamically loads the class specified in the String
+			//conn = DriverManager.getConnection(connection); // Uses the last loaded Driver
 			st = conn.createStatement();
 			ps = conn.prepareStatement("SELECT * FROM Users WHERE username=? AND password=?");
 			ps.setString(1, username); // question marks count from 1 up
@@ -157,15 +168,13 @@ public class SpookyChessServer {
 			}
 		} catch (SQLException sqle) {
 			System.out.println("sqle: " + sqle.getMessage());
-		} catch (ClassNotFoundException cnfe) {
-			System.out.println("cnfe: " + cnfe.getMessage());
-		} finally {
+		}
+		finally {
 			// finally block always executes and the end of the try-catch block no matter what happens
 			// usually used to CLOSE connections, streams, etc.
 			try {
 				if(rs!=null) {rs.close();}
 				if(st!=null) {st.close();}
-				if(conn!=null) {conn.close();}
 			} catch(SQLException sqle) {
 				System.out.println("OH OH");
 			}
@@ -196,14 +205,13 @@ public class SpookyChessServer {
 		else field = "losses";
 		int count = 0;
 		// connect to database
-		Connection conn = null;
 		Statement st = null;
 		ResultSet rs = null;
-		String connection = DBURL+"?user="+DBUSERNAME+"&password="+DBPASSWORD;
+		//String connection = DBURL+"?user="+DBUSERNAME+"&password="+DBPASSWORD+"&useSSL=false";
 		try
 		{
-			Class.forName("com.mysql.cj.jdbc.Driver"); // Dynamically loads the class specified in the String
-			conn = DriverManager.getConnection(connection); // Uses the last loaded Driver
+			//Class.forName("com.mysql.cj.jdbc.Driver"); // Dynamically loads the class specified in the String
+			//conn = DriverManager.getConnection(connection); // Uses the last loaded Driver
 			st = conn.createStatement();
 			
 			rs = st.executeQuery("SELECT "+field+" FROM Users WHERE userID="+userID);
@@ -216,13 +224,11 @@ public class SpookyChessServer {
 			
 		} catch (SQLException sqle) {
 			System.out.println("sqle: " + sqle.getMessage());
-		} catch (ClassNotFoundException cnfe) {
-			System.out.println("cnfe: " + cnfe.getMessage());
-		} finally {
+		}
+		finally {
 			try {
 				if(rs!=null) {rs.close();}
 				if(st!=null) {st.close();}
-				if(conn!=null) {conn.close();}
 			} catch(SQLException sqle) {
 				System.out.println("sqle: " + sqle.getMessage());
 			}

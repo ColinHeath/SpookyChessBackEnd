@@ -38,6 +38,7 @@ public class GameConnection {
 			if(requester.equals(left))
 			{
 				right.sendBoardState(boardState);
+				left.sendBoardState(boardState);
 				this.leftTurnToMove = !this.leftTurnToMove;
 			}
 			else return;
@@ -47,6 +48,7 @@ public class GameConnection {
 			if(requester.equals(left)) return;
 			else
 			{
+				right.sendBoardState(boardState);
 				left.sendBoardState(boardState);
 				this.leftTurnToMove = !this.leftTurnToMove;
 			}
